@@ -1,0 +1,26 @@
+# Autonomous Research Agent — Dependencies
+# Install with: pip install -r requirements.txt
+
+# LLM provider (free tier at https://console.groq.com)
+groq
+
+# Web search — no API key required
+ddgs
+
+# Async HTTP client for parallel page fetching
+aiohttp
+
+# HTML → clean text extraction
+trafilatura
+
+# Semantic deduplication (runs locally)
+sentence-transformers
+
+# Markdown → HTML parser
+markdown
+
+# PDF Export (100% pure Python, no external OS dependencies)
+xhtml2pdf
+
+# Environment variable management
+python-dotenv
