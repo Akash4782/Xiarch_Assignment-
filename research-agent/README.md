@@ -20,50 +20,47 @@ An autonomous AI agent that accepts a research topic, autonomously plans a searc
 
 ## 🏗️ Architecture
 
-```
-User Query (CLI)
-      │
-      ▼
-┌─────────────────────────────────────────────────────┐
-│                   main.py (Orchestrator)             │
-│                                                      │
-│  1. Check SQLite Memory  ──► Cache Hit? Return early │
-│  2. run_agent()                                      │
-│  3. chunk_text() + deduplicate()                     │
-│  4. synthesize_report()                              │
-│  5. export_markdown() / export_pdf()                 │
-│  6. save_search() → SQLite                           │
-└─────────────────────────────────────────────────────┘
-      │
-      ▼
-┌─────────────────────────────────────────────────────┐
-│               agent.py (Agentic Loop)                │
-│                                                      │
-│  Groq LLM ◄──────────────────────────────────────┐  │
-│      │                                            │  │
-│      ▼  (tool_calls)                              │  │
-│  ┌──────────────┐    ┌────────────────────────┐  │  │
-│  │  web_search  │    │      fetch_page         │  │  │
-│  │ (DuckDuckGo) │    │  (aiohttp, trafilatura) │  │  │
-│  └──────┬───────┘    └───────────┬────────────┘  │  │
-│         │  [parallel execution]  │               │  │
-│         └──────────┬─────────────┘               │  │
-│                    │ results                      │  │
-│                    └──────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
-      │
-      ▼
-┌─────────────────────────────────────────────────────┐
-│             dedup.py (Semantic Deduplication)        │
-│  sentence-transformers → cosine similarity > 0.85   │
-└─────────────────────────────────────────────────────┘
-      │
-      ▼
-┌─────────────────────────────────────────────────────┐
-│          Groq LLM Synthesis → Markdown & PDF         │
-│  Sections: Executive Summary | Key Points | Findings │
-│            Actionable Insights | References          │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A(["👤 User Query - CLI / Interactive"]) --> B
+
+    subgraph MAIN ["🗂️ main.py — Orchestrator"]
+        B["1. Check SQLite Memory"] -->|Cache Hit| C(["⚡ Return Cached Report instantly"])
+        B -->|Cache Miss| D["2. run_agent()"]
+        D --> E["3. chunk_text() + deduplicate()"]
+        E --> F["4. synthesize_report()"]
+        F --> G["5. export_markdown() / export_pdf()"]
+        G --> H["6. save_search() → SQLite"]
+    end
+
+    subgraph AGENT ["🤖 agent.py — Agentic Loop"]
+        D --> I["Groq LLM - Planner"]
+        I -->|tool_calls| J["web_search - DuckDuckGo"]
+        I -->|tool_calls| K["fetch_page - aiohttp + trafilatura"]
+        J -->|parallel results| I
+        K -->|parallel results| I
+    end
+
+    subgraph DEDUP ["🧹 dedup.py — Semantic Deduplication"]
+        E --> L["sentence-transformers - all-MiniLM-L6-v2"]
+        L --> M["Cosine Similarity Filter - threshold 0.85"]
+    end
+
+    subgraph EXPORT ["📄 export.py — Report Generation"]
+        F --> N["Groq LLM Synthesis"]
+        N --> O["Markdown Report"]
+        N --> P["PDF Report - xhtml2pdf"]
+    end
+
+    subgraph MEMORY ["💾 memory.py — SQLite Cache"]
+        H --> Q[("searches.db")]
+    end
+
+    style MAIN fill:#1e3a5f,stroke:#4a9eff,color:#fff
+    style AGENT fill:#1a3a2a,stroke:#4aff8a,color:#fff
+    style DEDUP fill:#3a1a3a,stroke:#cc88ff,color:#fff
+    style EXPORT fill:#3a2a1a,stroke:#ffaa44,color:#fff
+    style MEMORY fill:#1a2a3a,stroke:#44aaff,color:#fff
 ```
 
 ---
